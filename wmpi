@@ -1,0 +1,60 @@
+#!/usr/bin/env python3
+import libtmux
+import sys
+import subprocess
+import tempfile
+import os
+
+
+
+
+if __name__ == '__main__':
+    
+    env_var = sys.argv[1]
+    nproc = int(sys.argv[2])
+    cmd = sys.argv[3:]
+    
+    temp_dir = tempfile.mkdtemp(prefix='wmpi_')
+
+    tmux_server = libtmux.Server()
+    tmux_session = tmux_server.new_session('wmpi')
+
+    dtach_prefix = ' '.join(['dtach', '-n', os.path.join(temp_dir, '$'+env_var)])
+    
+    print(dtach_prefix)
+    lock_file = os.path.join(temp_dir, 'lock')
+    cmd_block = ' until [ -f ' + lock_file + ' ]; do sleep 1; done;'
+    print(cmd_block)
+
+    cmd = ' '.join(cmd)
+
+    cmd_block = ' bash -c ' + "'" + cmd_block + cmd + "'"
+    print(cmd_block)
+
+    cmd = dtach_prefix + cmd_block
+    
+    print("CMD", cmd)
+
+    launch_cmd = ('mpiexec', '-n', str(nproc), 'bash', '-c', cmd)
+
+    print(launch_cmd)
+    mpiproc = subprocess.Popen(launch_cmd)
+
+    tmux_session.set_option('remain-on-exit', 'on')
+    for px in range(nproc):
+        win_cmd = 'dtach -a ' + os.path.join(temp_dir, str(px))
+        w = tmux_session.new_window(attach=False, window_name=str(px))#, window_shell=win_cmd)
+        pane = w.list_panes()[0]
+        pane.send_keys(win_cmd)
+
+    with open(lock_file, 'w') as fh:
+        fh.write("1")
+    
+    mpiproc.communicate()
+
+    a = input("Press Enter to kill tmux session and quit")
+    tmux_session.kill_session()
+
+
+
+

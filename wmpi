@@ -5,7 +5,6 @@ System requirements: dtach, tmux
 Pip requirements: libtmux
 """
 
-
 import libtmux
 import sys
 import subprocess
@@ -13,32 +12,22 @@ import tempfile
 import os
 import glob
 import time
+import shutil
+
+PROGRAM_PATH = os.path.abspath(__file__)
 
 
-if __name__ == "__main__":
+def main():
 
     nproc = int(sys.argv[1])
     cmd = sys.argv[2:]
 
     temp_dir = tempfile.TemporaryDirectory(prefix="wmpi")
 
-    # generate the dtach command
-    dtach_prefix = " ".join(["dtach", "-n", "$(mktemp -p {} -d)/dtach.socket".format(temp_dir.name)])
-    print(dtach_prefix)
-
     # we use a file as lock that prevents the command from starting before the tmux windows are connected
     lock_file = os.path.join(temp_dir.name, "lock")
-    cmd_block = " until [ -f " + lock_file + " ]; do sleep 1; done;"
-    print(cmd_block)
-    cmd = " ".join(cmd)
-    cmd_block = " bash -c " + "'" + cmd_block + cmd + "'"
-    print(cmd_block)
 
-    cmd = dtach_prefix + cmd_block
-
-    print("CMD", cmd)
-
-    launch_cmd = ("mpiexec", "-n", str(nproc), "bash", "-c", cmd)
+    launch_cmd = ["mpiexec", "-n", str(nproc), sys.executable, PROGRAM_PATH, "DTACH_CHILD", temp_dir.name] + cmd
     print(launch_cmd)
 
     # do the mpi launch
@@ -77,3 +66,28 @@ if __name__ == "__main__":
     a = input("Press Enter to kill tmux session and quit")
     tmux_session.kill_session()
     temp_dir.cleanup()
+
+
+def dtach_child():
+    dtach_socket = os.path.join(tempfile.mkdtemp(dir=sys.argv[2]), "dtach.socket")
+    cmd = sys.argv[3:]
+    dtach_cmd = ["dtach", "-n", dtach_socket, sys.executable, PROGRAM_PATH, "EXEC_CHILD", sys.argv[2]] + cmd
+    os.execv(shutil.which("dtach"), dtach_cmd)
+
+
+def exec_child():
+    lock_file = os.path.join(sys.argv[2], "lock")
+    cmd = sys.argv[3:]
+    while not os.path.exists(lock_file):
+        time.sleep(0.1)
+    os.execv(shutil.which(cmd[0]), cmd)
+
+
+if __name__ == "__main__":
+
+    if sys.argv[1] == "DTACH_CHILD":
+        dtach_child()
+    elif sys.argv[1] == "EXEC_CHILD":
+        exec_child()
+    else:
+        main()

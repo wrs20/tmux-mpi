@@ -21,22 +21,17 @@ def main():
 
     nproc = int(sys.argv[1])
     cmd = sys.argv[2:]
-
+    
+    # directory for lock files and dtach sockets
     temp_dir = tempfile.TemporaryDirectory(prefix="wmpi")
 
-    # we use a file as lock that prevents the command from starting before the tmux windows are connected
-    lock_file = os.path.join(temp_dir.name, "lock")
-
-    launch_cmd = ["mpiexec", "-n", str(nproc), sys.executable, PROGRAM_PATH, "DTACH_CHILD", temp_dir.name] + cmd
-    print(launch_cmd)
-
     # do the mpi launch
+    launch_cmd = ["mpiexec", "-n", str(nproc), sys.executable, PROGRAM_PATH, "DTACH_CHILD", temp_dir.name] + cmd
     mpiproc = subprocess.Popen(launch_cmd)
 
     # Wait for all the dtach processes to create sockets before trying to connect to them
     def get_socket_files():
         return glob.glob(os.path.join(temp_dir.name, "*", "dtach.socket"))
-
     time.sleep(0.2)
     socket_files = get_socket_files()
     while len(socket_files) != nproc:
@@ -47,7 +42,7 @@ def main():
 
     # start a tmux session with name "wmpi"
     tmux_server = libtmux.Server()
-    tmux_session = tmux_server.new_session(formatter_prefix="wmpi")
+    tmux_session = tmux_server.new_session("wmpi")
     tmux_session.set_option("remain-on-exit", "on")
 
     # create a new window in the tmux session for each dtach instance
@@ -62,19 +57,26 @@ def main():
         pane = w.list_panes()[0]
         win_cmd = "dtach -a " + socket_files[px]
         pane.send_keys(win_cmd)
-
-    # write the lock file that lets the user command launch
+    
+    # now the tmux windows are connected to the dtach instances we let the program run
+    # we use a file as lock that prevents the command from starting before the tmux windows are connected
+    lock_file = os.path.join(temp_dir.name, "lock")
     with open(lock_file, "w") as fh:
         fh.write("1")
+    
+    print("\nUse: tmux attach -t wmpi")
 
     # Try to terminate cleanly
     mpiproc.communicate()
-    a = input("Press Enter to kill tmux session and quit")
+    a = input("\nPress Enter to kill tmux session and quit")
     tmux_session.kill_session()
     temp_dir.cleanup()
 
 
 def dtach_child():
+    """
+    Creates a new dtach instance with a socket in the temp dir that runs this script again to invoke exec_child.
+    """
     dtach_socket = os.path.join(tempfile.mkdtemp(dir=sys.argv[2]), "dtach.socket")
     cmd = sys.argv[3:]
     dtach_cmd = ["dtach", "-n", dtach_socket, sys.executable, PROGRAM_PATH, "EXEC_CHILD", sys.argv[2]] + cmd
@@ -82,6 +84,9 @@ def dtach_child():
 
 
 def exec_child():
+    """
+    Waits for the lock file to be created then runs the user command.
+    """
     lock_file = os.path.join(sys.argv[2], "lock")
     cmd = sys.argv[3:]
     while not os.path.exists(lock_file):

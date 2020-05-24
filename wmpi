@@ -47,7 +47,7 @@ def main():
 
     # start a tmux session with name "wmpi"
     tmux_server = libtmux.Server()
-    tmux_session = tmux_server.new_session("wmpi")
+    tmux_session = tmux_server.new_session(formatter_prefix="wmpi")
     tmux_session.set_option("remain-on-exit", "on")
 
     # create a new window in the tmux session for each dtach instance

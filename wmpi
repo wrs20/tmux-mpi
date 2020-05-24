@@ -52,9 +52,15 @@ def main():
 
     # create a new window in the tmux session for each dtach instance
     for px in range(nproc):
-        win_cmd = "dtach -a " + socket_files[px]
-        w = tmux_session.new_window(attach=False, window_name=str(px))
+        if px == 0:
+            # get first window
+            w = tmux_session.windows[0]
+            w.rename_window(str(px))
+        else:
+            w = tmux_session.new_window(attach=False, window_name=str(px))
+
         pane = w.list_panes()[0]
+        win_cmd = "dtach -a " + socket_files[px]
         pane.send_keys(win_cmd)
 
     # write the lock file that lets the user command launch

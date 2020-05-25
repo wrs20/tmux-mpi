@@ -14,6 +14,8 @@ import glob
 import time
 import shutil
 import pty
+import atexit
+import psutil
 
 PROGRAM_PATH = os.path.abspath(__file__)
 
@@ -43,6 +45,16 @@ def check_args():
         print_help()
 
 
+def get_pids_from_file(filename):
+    cmd = ("lsof", "-t", filename)
+    lsof = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    output, errs = lsof.communicate()
+    output = output.decode(sys.stdout.encoding)
+    output = output.strip().split("\n")
+    pids = [int(px) for px in output]
+    return pids
+
+
 def main():
 
     nproc = int(sys.argv[1])
@@ -69,11 +81,16 @@ def main():
 
     # start a tmux session with name "tmux-mpi"
     tmux_server = libtmux.Server()
+    if tmux_server.has_session("tmux-mpi"):
+        tmux_session = tmux_server.find_where({"session_name": "tmux-mpi"})
+        tmux_session.kill_session()
     tmux_session = tmux_server.new_session("tmux-mpi")
     tmux_session.set_option("remain-on-exit", "on")
 
     # create a new window in the tmux session for each dtach instance
+    dtach_pids = []
     for px in range(nproc):
+        dtach_pids += get_pids_from_file(socket_files[px])
         if px == 0:
             # get first window
             w = tmux_session.windows[0]
@@ -85,13 +102,40 @@ def main():
         win_cmd = "dtach -a " + socket_files[px]
         pane.send_keys(win_cmd)
 
+    # register the atexit function that tries to cleanup if needed
+    def cleanup():
+        try:
+            temp_dir.cleanup()
+        except Exception as e:
+            print(e)
+
+        try:
+            tmux_session.kill_session()
+        except Exception as e:
+            print(e)
+
+        try:
+            mpiproc.kill()
+        except Exception as e:
+            pass
+
+        for pidx in dtach_pids:
+            try:
+                p = psutil.Process(pidx)
+                p.kill()
+            except Exception as e:
+                pass
+
+    atexit.register(cleanup)
+
     # now the tmux windows are connected to the dtach instances we let the program run
     # we use a file as lock that prevents the command from starting before the tmux windows are connected
     lock_file = os.path.join(temp_dir.name, "lock")
     with open(lock_file, "w") as fh:
         fh.write("1")
 
-    print("""
+    print(
+        """
 To connect use
 
     tmux attach
@@ -101,13 +145,12 @@ or
     tmux attach -t tmux-mpi
 
 if you have existing tmux sessions.
-""")
+"""
+    )
 
     # Try to terminate cleanly
     mpiproc.communicate()
     a = input("\nPress Enter to kill tmux session and quit")
-    tmux_session.kill_session()
-    temp_dir.cleanup()
 
 
 def dtach_child():

@@ -12,7 +12,7 @@ setup(
    name='tmux-mpi',
    version='1.0',
    description='',
-   license="GPL3",
+   license="MIT",
    long_description=long_description,
    author='William R Saunders',
    author_email='W.R.Saunders@bath.ac.uk',

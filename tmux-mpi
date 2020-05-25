@@ -45,16 +45,6 @@ def check_args():
         print_help()
 
 
-def get_pids_from_file(filename):
-    cmd = ("lsof", "-t", filename)
-    lsof = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    output, errs = lsof.communicate()
-    output = output.decode(sys.stdout.encoding)
-    output = output.strip().split("\n")
-    pids = [int(px) for px in output]
-    return pids
-
-
 def main():
 
     nproc = int(sys.argv[1])
@@ -88,9 +78,7 @@ def main():
     tmux_session.set_option("remain-on-exit", "on")
 
     # create a new window in the tmux session for each dtach instance
-    dtach_pids = []
     for px in range(nproc):
-        dtach_pids += get_pids_from_file(socket_files[px])
         if px == 0:
             # get first window
             w = tmux_session.windows[0]
@@ -101,6 +89,8 @@ def main():
         pane = w.list_panes()[0]
         win_cmd = "dtach -a " + socket_files[px]
         pane.send_keys(win_cmd)
+
+    mpiproc_children = psutil.Process(mpiproc.pid).children(recursive=True)
 
     # register the atexit function that tries to cleanup if needed
     def cleanup():
@@ -119,10 +109,9 @@ def main():
         except Exception as e:
             pass
 
-        for pidx in dtach_pids:
+        for pidx in mpiproc_children:
             try:
-                p = psutil.Process(pidx)
-                p.kill()
+                pidx.kill()
             except Exception as e:
                 pass
 

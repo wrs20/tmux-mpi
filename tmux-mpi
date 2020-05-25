@@ -18,6 +18,31 @@ import pty
 PROGRAM_PATH = os.path.abspath(__file__)
 
 
+def check_dtach():
+    dtach = shutil.which("dtach")
+    if dtach == None:
+        raise RuntimeWarning("This tool requires dtach. We could not find dtach using which.")
+
+
+def print_help():
+    print(
+        """tmux-mpi is a tool for running MPI processes in tmux windows. Run with:
+
+    tmux-mpi <nproc> <executable>
+
+If the program crashes there are likely to be dtach instances that will need
+manually cleanup.
+"""
+    )
+
+    exit(-1)
+
+
+def check_args():
+    if len(sys.argv) < 3:
+        print_help()
+
+
 def main():
 
     nproc = int(sys.argv[1])
@@ -100,6 +125,8 @@ def exec_child():
 
 
 if __name__ == "__main__":
+    check_dtach()
+    check_args()
 
     if sys.argv[1] == "DTACH_CHILD":
         dtach_child()

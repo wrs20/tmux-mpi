@@ -20,7 +20,7 @@ will start a tmux session called ``tmux-mpi`` that can be connect to in a differ
 
     tmux attach -t tmux-mpi
 
-or
+or use
 ::
 
     tmux attach

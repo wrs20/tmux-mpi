@@ -31,7 +31,7 @@ This dtach approach does mean that if the program crashes manual cleanup may nee
 
     pkill -9 dtach
 
-Copyright 2019, WR Saunders, wrs20@bath.ac.uk
+Copyright 2020, WR Saunders, wrs20@bath.ac.uk
 
 Installation
 ------------

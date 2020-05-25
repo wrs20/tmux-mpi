@@ -20,7 +20,7 @@ will start a tmux session called ``tmux-mpi`` that can be connect to in a differ
 
     tmux attach -t tmux-mpi
 
-or
+or use
 ::
 
     tmux attach
@@ -35,7 +35,7 @@ Copyright 2019, WR Saunders, wrs20@bath.ac.uk
 
 Installation
 ------------
-Pip installable with:
+Requires dtach and tmux to be installed. Pip installable with:
 ::
     
     pip install --upgrade --no-cache-dir git+https://github.com/wrs20/tmux-mpi@master

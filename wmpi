@@ -13,6 +13,7 @@ import os
 import glob
 import time
 import shutil
+import pty
 
 PROGRAM_PATH = os.path.abspath(__file__)
 
@@ -21,7 +22,7 @@ def main():
 
     nproc = int(sys.argv[1])
     cmd = sys.argv[2:]
-    
+
     # directory for lock files and dtach sockets
     temp_dir = tempfile.TemporaryDirectory(prefix="wmpi")
 
@@ -32,6 +33,7 @@ def main():
     # Wait for all the dtach processes to create sockets before trying to connect to them
     def get_socket_files():
         return glob.glob(os.path.join(temp_dir.name, "*", "dtach.socket"))
+
     time.sleep(0.2)
     socket_files = get_socket_files()
     while len(socket_files) != nproc:
@@ -57,13 +59,13 @@ def main():
         pane = w.list_panes()[0]
         win_cmd = "dtach -a " + socket_files[px]
         pane.send_keys(win_cmd)
-    
+
     # now the tmux windows are connected to the dtach instances we let the program run
     # we use a file as lock that prevents the command from starting before the tmux windows are connected
     lock_file = os.path.join(temp_dir.name, "lock")
     with open(lock_file, "w") as fh:
         fh.write("1")
-    
+
     print("\nUse: tmux attach -t wmpi")
 
     # Try to terminate cleanly
@@ -79,8 +81,10 @@ def dtach_child():
     """
     dtach_socket = os.path.join(tempfile.mkdtemp(dir=sys.argv[2]), "dtach.socket")
     cmd = sys.argv[3:]
-    dtach_cmd = ["dtach", "-n", dtach_socket, sys.executable, PROGRAM_PATH, "EXEC_CHILD", sys.argv[2]] + cmd
-    os.execv(shutil.which("dtach"), dtach_cmd)
+    dtach_cmd = ["dtach", "-N", dtach_socket, sys.executable, PROGRAM_PATH, "EXEC_CHILD", sys.argv[2]] + cmd
+
+    # Using execv worked for mpich/openmpi but not intel MPI, using pty.spawn seems to keep intel MPI happy
+    pty.spawn(dtach_cmd)
 
 
 def exec_child():
@@ -91,6 +95,7 @@ def exec_child():
     cmd = sys.argv[3:]
     while not os.path.exists(lock_file):
         time.sleep(0.1)
+    # launch the actual user command
     os.execv(shutil.which(cmd[0]), cmd)
 
 

@@ -16,6 +16,7 @@ import shutil
 import pty
 import atexit
 import psutil
+import shlex
 
 PROGRAM_PATH = os.path.abspath(__file__)
 
@@ -33,7 +34,7 @@ def print_help():
     tmux-mpi <nproc> <executable>
 
 If the program crashes there are likely to be dtach instances that will need
-manually cleanup.
+manually cleaning up.
 """
     )
 
@@ -53,8 +54,13 @@ def main():
     # directory for lock files and dtach sockets
     temp_dir = tempfile.TemporaryDirectory(prefix="tmux-mpi")
 
+    if "TMUX_MPI_MPIRUN" in os.environ.keys():
+        mpi_exec = shlex.split(os.environ["TMUX_MPI_MPIRUN"])
+    else:
+        mpi_exec = ["mpiexec"]
+
     # do the mpi launch
-    launch_cmd = ["mpiexec", "-n", str(nproc), sys.executable, PROGRAM_PATH, "DTACH_CHILD", temp_dir.name] + cmd
+    launch_cmd = mpi_exec + ["-n", str(nproc), sys.executable, PROGRAM_PATH, "DTACH_CHILD", temp_dir.name] + cmd
     mpiproc = subprocess.Popen(launch_cmd)
 
     # Wait for all the dtach processes to create sockets before trying to connect to them

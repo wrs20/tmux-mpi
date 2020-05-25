@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Usage: wmpi <nproc> <command>
+Usage: tmux-mpi <nproc> <command>
 System requirements: dtach, tmux
 Pip requirements: libtmux
 """
@@ -49,7 +49,7 @@ def main():
     cmd = sys.argv[2:]
 
     # directory for lock files and dtach sockets
-    temp_dir = tempfile.TemporaryDirectory(prefix="wmpi")
+    temp_dir = tempfile.TemporaryDirectory(prefix="tmux-mpi")
 
     # do the mpi launch
     launch_cmd = ["mpiexec", "-n", str(nproc), sys.executable, PROGRAM_PATH, "DTACH_CHILD", temp_dir.name] + cmd
@@ -67,9 +67,9 @@ def main():
         socket_files = get_socket_files()
     print("Waiting for dtach sockets to appear. Found {} out of {}.".format(len(socket_files), nproc))
 
-    # start a tmux session with name "wmpi"
+    # start a tmux session with name "tmux-mpi"
     tmux_server = libtmux.Server()
-    tmux_session = tmux_server.new_session("wmpi")
+    tmux_session = tmux_server.new_session("tmux-mpi")
     tmux_session.set_option("remain-on-exit", "on")
 
     # create a new window in the tmux session for each dtach instance
@@ -91,7 +91,17 @@ def main():
     with open(lock_file, "w") as fh:
         fh.write("1")
 
-    print("\nUse: tmux attach -t wmpi")
+    print("""
+To connect use
+
+    tmux attach
+
+or
+
+    tmux attach -t tmux-mpi
+
+if you have existing tmux sessions.
+""")
 
     # Try to terminate cleanly
     mpiproc.communicate()

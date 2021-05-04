@@ -75,6 +75,8 @@ def main():
         socket_files = get_socket_files()
     print("Waiting for dtach sockets to appear. Found {} out of {}.".format(len(socket_files), nproc))
 
+    print(socket_files)
+
     # start a tmux session with name "tmux-mpi"
     tmux_server = libtmux.Server()
     if tmux_server.has_session("tmux-mpi"):
@@ -82,6 +84,8 @@ def main():
         tmux_session.kill_session()
     tmux_session = tmux_server.new_session("tmux-mpi")
     tmux_session.set_option("remain-on-exit", "on")
+    
+    time.sleep(2)
 
     # create a new window in the tmux session for each dtach instance
     for px in range(nproc):
@@ -94,7 +98,13 @@ def main():
 
         pane = w.list_panes()[0]
         win_cmd = "dtach -a " + socket_files[px]
+
+        #win_cmd = "hostname"
         pane.send_keys(win_cmd)
+
+        print(pane.values())
+
+
 
     mpiproc_children = psutil.Process(mpiproc.pid).children(recursive=True)
 

@@ -74,6 +74,8 @@ def main():
         time.sleep(0.2)
         socket_files = get_socket_files()
     print("Waiting for dtach sockets to appear. Found {} out of {}.".format(len(socket_files), nproc))
+    
+    print(socket_files)
 
     # start a tmux session with name "tmux-mpi"
     tmux_server = libtmux.Server()
@@ -82,6 +84,7 @@ def main():
         tmux_session.kill_session()
     tmux_session = tmux_server.new_session("tmux-mpi")
     tmux_session.set_option("remain-on-exit", "on")
+
 
     # create a new window in the tmux session for each dtach instance
     for px in range(nproc):
@@ -98,6 +101,7 @@ def main():
 
     mpiproc_children = psutil.Process(mpiproc.pid).children(recursive=True)
 
+    time.sleep(1.0)
     # register the atexit function that tries to cleanup if needed
     def cleanup():
         try:
@@ -125,8 +129,13 @@ def main():
 
     # loop over the tmux windows and send a newline to allow the execution to continue
     # exists to prevent the program execution completing before the tmux pane is attached
-    for wx in tmux_session.list_windows():
-        wx.list_panes()[0].enter()
+    #with open(os.path.join(temp_dir.name, "release"), "w+") as fh:
+    #        fh.write("1")
+
+
+    #for wx in tmux_session.list_windows():
+    #    print(wx)
+    #    wx.list_panes()[0].enter()
 
     print(
         """
@@ -153,7 +162,7 @@ def dtach_child():
     """
     dtach_socket = os.path.join(tempfile.mkdtemp(dir=sys.argv[2]), "dtach.socket")
     cmd = sys.argv[3:]
-    dtach_cmd = ["dtach", "-N", dtach_socket, sys.executable, PROGRAM_PATH, "EXEC_CHILD", sys.argv[2]] + cmd
+    dtach_cmd = ["dtach", "-N", dtach_socket, "-E", "-z", sys.executable, PROGRAM_PATH, "EXEC_CHILD", sys.argv[2]] + cmd
 
     # Using execv worked for mpich/openmpi but not intel MPI, using pty.spawn seems to keep intel MPI happy
     pty.spawn(dtach_cmd)
@@ -165,7 +174,10 @@ def exec_child():
     """
 
     # Wait for the newline to be send that indicates all the tmux windows are connected.
-    a = input("Waiting for tmux windows to all be connected...\n")
+    # a = input("Waiting for tmux windows to all be connected...\n")
+    
+    while not os.path.exists(os.path.join(sys.argv[2], "release")):
+        time.sleep(0.1)
 
     # launch the actual user command
     cmd = sys.argv[3:]

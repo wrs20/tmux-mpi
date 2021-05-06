@@ -40,4 +40,13 @@ Requires dtach and tmux to be installed. Pip installable with:
     
     pip install --upgrade --no-cache-dir git+https://github.com/wrs20/tmux-mpi@master
 
+Known Issues and Workarounds
+----------------------------
+
+Intel MPI
+~~~~~~~~~
+Some (recent?) versions of Intel MPI try to do stdin redirection by default. If you have issues with ranks not starting try the following (as demonstrated using python):
+::
+    
+    TMUX_MPI_MPIRUN="mpiexec -s all" tmux-mpi 2 python
 

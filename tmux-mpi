@@ -84,6 +84,7 @@ def main():
         tmux_session.kill_session()
     tmux_session = tmux_server.new_session("tmux-mpi")
     tmux_session.set_option("remain-on-exit", "on")
+    time.sleep(0.5)
 
 
     # create a new window in the tmux session for each dtach instance

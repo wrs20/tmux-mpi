@@ -42,7 +42,7 @@ Requires dtach and tmux to be installed. Pip installable with:
 
 Configuration
 -------------
-Some environment variables can be set to configure behaviour:
+Some environment variables can be set to configure behaviour. These are environment variables such that they can be set once somewhere in an environment.
 
 ``TMUX_MPI_MPIRUN``
   Configure how ``mpiexec`` is called, e.g. ``TMUX_MPI_MPIRUN="mpiexec -s all"`` for recent Intel MPI.

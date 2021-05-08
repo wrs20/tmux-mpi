@@ -43,7 +43,6 @@ Requires dtach and tmux to be installed. Pip installable with:
 Configuration
 -------------
 Some environment variables can be set to configure behaviour:
-::
 
 ``TMUX_MPI_MPIRUN``
   Configure how ``mpiexec`` is called, e.g. ``TMUX_MPI_MPIRUN=mpiexec -s all`` such as for Intel MPI.

@@ -47,11 +47,11 @@ Some environment variables can be set to configure behaviour. These are environm
 ``TMUX_MPI_MPIRUN``
   Configure how ``mpiexec`` is called, e.g. ``TMUX_MPI_MPIRUN="mpiexec -s all"`` for recent Intel MPI.
 ``TMUX_MPI_POST_LAUNCH``
-  Configure a command to launch after the processes have started, e.g. ``TMUX_MPI_POST_LAUNCH="xterm -e 'tmux attach -t tmux-mpi'"`` would launch a new ``xterm`` and connect to the created server.
+  Configure a command to launch after the processes have started, e.g. ``TMUX_MPI_POST_LAUNCH="xterm -e 'tmux attach -t TMUX_MPI_SESSION_NAME'"`` would launch a new ``xterm`` and connect to the created server. The string ``TMUX_MPI_SESSION_NAME`` will be replaced with the actual session name.
 ``TMUX_MPI_MODE``
   Choose if each rank should be in a new tmux window using ``window`` (default) or ``pane``, e.g. ``TMUX_MPI_MODE=pane``.
 ``TMUX_MPI_SYNC_PANES``
-  Synchronises the input to the tmux panes when using ``TMUX_MPI_MODE=pane``, e.g. ``TMUX_MPI_SYNC_PANES=1``. Default off.
+  Synchronises the input to the tmux panes when using ``TMUX_MPI_MODE=pane``, e.g. ``TMUX_MPI_SYNC_PANES=1``. Default off. Note that this uses the pane synchronisation built into tmux.
 
 Examples
 --------
@@ -61,7 +61,7 @@ Note that tmux window numbers are not MPI ranks (this functionality would requir
 ::
     
     # Start a xterm that connects to the session
-    export TMUX_MPI_POST_LAUNCH="xterm -e 'tmux attach -t tmux-mpi'"
+    export TMUX_MPI_POST_LAUNCH="xterm -e 'tmux attach -t TMUX_MPI_SESSION_NAME'"
     # launch tmux-mpi
     tmux-mpi 2 gdb --ex run --args python <script-name>
 
@@ -69,7 +69,7 @@ Same as above but using tmux panes instead of windows and synchronised input:
 ::
     
     # Start a xterm that connects to the session
-    export TMUX_MPI_POST_LAUNCH="xterm -e 'tmux attach -t tmux-mpi'"
+    export TMUX_MPI_POST_LAUNCH="xterm -e 'tmux attach -t TMUX_MPI_SESSION_NAME'"
     # use panes not windows
     export TMUX_MPI_MODE=pane
     #synchronised inputs

@@ -21,7 +21,7 @@ import itertools
 
 PROGRAM_PATH = os.path.abspath(__file__)
 MPI_EXEC = shlex.split(os.environ.get("TMUX_MPI_MPIRUN", "mpiexec"))
-POST_LAUNCH = shlex.split(os.environ.get("TMUX_MPI_POST_LAUNCH", ""))
+MODE = os.environ.get("TMUX_MPI_MODE", "window")
 
 
 def check_dtach():
@@ -50,16 +50,13 @@ def check_args():
 
 
 class TMUXSession:
-    def __init__(self, mode):
-        if not mode in ("window", "pane"):
+    def __init__(self):
+        if not MODE in ("window", "pane"):
             raise RuntimeError('TMUX_MPI_MODE should be either "window" or "pane".')
-        self.mode = mode
-        # start a tmux session with name "tmux-mpi"
+        self.mode = MODE
         self.tmux_server = libtmux.Server()
-        if self.tmux_server.has_session("tmux-mpi"):
-            self.tmux_session = self.tmux_server.find_where({"session_name": "tmux-mpi"})
-            self.tmux_session.kill_session()
-        self.tmux_session = self.tmux_server.new_session("tmux-mpi")
+        self.name = self._get_name()
+        self.tmux_session = self.tmux_server.new_session(self.name)
         self.tmux_session.set_option("remain-on-exit", "on")
         self.screens = None
 
@@ -79,6 +76,15 @@ class TMUXSession:
                 w.split_window()
                 w.select_layout("tiled")
         self.screens = list(itertools.chain(*[wx.list_panes() for wx in self.tmux_session.list_windows()]))
+
+    def _get_name(self):
+        nb = "tmux-mpi{}"
+        n = nb.format("")
+        c = 0
+        while self.tmux_server.has_session(n):
+            c += 1
+            n = nb.format("-" + str(c))
+        return n
 
     def send_keys(self, ix, keys):
         self.screens[ix].send_keys(keys)
@@ -105,6 +111,17 @@ def cleanup():
 def main():
     # register the atexit function that tries to cleanup if needed
     atexit.register(cleanup)
+
+    # start a tmux session with name "tmux-mpi"
+    tmux_session = TMUXSession()
+
+    def cleanup_tmux():
+        try:
+            tmux_session.kill_session()
+        except Exception as e:
+            print(e)
+
+    _cleanup.append(cleanup_tmux)
 
     nproc = int(sys.argv[1])
     cmd = sys.argv[2:]
@@ -148,17 +165,6 @@ def main():
 
     _cleanup.append(cleanup_mpi)
 
-    # start a tmux session with name "tmux-mpi"
-    tmux_session = TMUXSession(os.environ.get("TMUX_MPI_MODE", "window"))
-
-    def cleanup_tmux():
-        try:
-            tmux_session.kill_session()
-        except Exception as e:
-            print(e)
-
-    _cleanup.append(cleanup_tmux)
-
     # create n windows or panes
     tmux_session.add(nproc)
     # run the launch command in each window or pane
@@ -176,18 +182,19 @@ def main():
         """
 To connect use
 
-    tmux attach
+    tmux attach -t {}
 
-or
-
-    tmux attach -t tmux-mpi
-
-if you have existing tmux sessions.
-"""
+""".format(
+            tmux_session.name
+        )
     )
     # run the post launch command if exists
-    if POST_LAUNCH:
-        subprocess.check_call(POST_LAUNCH)
+
+    if "TMUX_MPI_POST_LAUNCH" in os.environ:
+        post_launch = shlex.split(
+            os.environ.get("TMUX_MPI_POST_LAUNCH", "").replace("TMUX_MPI_SESSION_NAME", tmux_session.name)
+        )
+        subprocess.check_call(post_launch)
 
     # Try to terminate cleanly
     mpiproc.communicate()

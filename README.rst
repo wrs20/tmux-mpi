@@ -50,6 +50,8 @@ Some environment variables can be set to configure behaviour:
   Configure a command to launch after the processes have started, e.g. ``TMUX_MPI_POST_LAUNCH="xterm -e 'tmux attach -t tmux-mpi'"`` would launch a new ``xterm`` and connect to the created server.
 ``TMUX_MPI_MODE``
   Choose if each rank should be in a new tmux window using ``window`` (default) or ``pane``, e.g. ``TMUX_MPI_MODE=pane``.
+``TMUX_MPI_SYNC_PANES``
+  Synchronises the input to the tmux panes when using ``TMUX_MPI_MODE=pane``, e.g. ``TMUX_MPI_SYNC_PANES=1``. Default off.
 
 Examples
 --------
@@ -57,10 +59,23 @@ Examples
 Try the following to start debugging a Python program using a C extension in GDB and 2 MPI ranks. The environment variable will automatically launch a xterm window to connect to the session.
 Note that tmux window numbers are not MPI ranks (this functionality would require this tool to access the MPI implementation somehow).
 ::
-
+    
+    # Start a xterm that connects to the session
     export TMUX_MPI_POST_LAUNCH="xterm -e 'tmux attach -t tmux-mpi'"
+    # launch tmux-mpi
     tmux-mpi 2 gdb --ex run --args python <script-name>
 
+Same as above but using tmux panes instead of windows and synchronised input:
+::
+    
+    # Start a xterm that connects to the session
+    export TMUX_MPI_POST_LAUNCH="xterm -e 'tmux attach -t tmux-mpi'"
+    # use panes not windows
+    export TMUX_MPI_MODE=pane
+    #synchronised inputs
+    export TMUX_MPI_SYNC_PANES=1
+    # launch tmux-mpi
+    tmux-mpi 2 gdb --ex run --args python <script-name>
 
 Known Issues and Workarounds
 ----------------------------

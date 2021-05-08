@@ -90,6 +90,9 @@ class TMUXSession:
     def kill_session(self):
         self.tmux_session.kill_session()
 
+    def set_sync_panes(self):
+        self.tmux_session.set_option("synchronize-panes", "on")
+
 
 _cleanup = []
 
@@ -166,6 +169,8 @@ def main():
     # loop over the tmux windows and send a newline to allow the execution to continue
     # exists to prevent the program execution completing before the tmux pane is attached
     tmux_session.send_enter()
+    if "TMUX_MPI_SYNC_PANES" in os.environ:
+        tmux_session.set_sync_panes()
 
     print(
         """

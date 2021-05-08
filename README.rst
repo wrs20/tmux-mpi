@@ -54,7 +54,7 @@ Examples
 --------
 
 Try the following to start debugging a Python program using a C extension in GDB and 2 MPI ranks. The environment variable will automatically launch a xterm window to connect to the session.
-Note that tmux window numbers are not MPI ranks (this fucntionality would require this tool to access the MPI implementation somehow).
+Note that tmux window numbers are not MPI ranks (this functionality would require this tool to access the MPI implementation somehow).
 ::
 
     export TMUX_MPI_POST_LAUNCH="xterm -e 'tmux attach -t tmux-mpi'"

@@ -20,7 +20,7 @@ import shlex
 
 PROGRAM_PATH = os.path.abspath(__file__)
 MPI_EXEC = shlex.split(os.environ.get("TMUX_MPI_MPIRUN", "mpiexec"))
-
+POST_LAUNCH = shlex.split(os.environ.get("TMUX_MPI_POST_LAUNCH", ""))
 
 def check_dtach():
     dtach = shutil.which("dtach")
@@ -138,6 +138,9 @@ or
 if you have existing tmux sessions.
 """
     )
+    # run the post launch command if exists
+    if POST_LAUNCH:
+        subprocess.check_call(POST_LAUNCH)
 
     # Try to terminate cleanly
     mpiproc.communicate()

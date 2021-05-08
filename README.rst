@@ -15,7 +15,7 @@ For example,
     
     tmux-mpi 2 hostname
 
-will start a tmux session called ``tmux-mpi`` that can be connect to in a different terminal with
+will start a tmux session called ``tmux-mpi`` that can be connected to in a different terminal with
 ::
 
     tmux attach -t tmux-mpi
@@ -39,6 +39,17 @@ Requires dtach and tmux to be installed. Pip installable with:
 ::
     
     pip install --upgrade --no-cache-dir git+https://github.com/wrs20/tmux-mpi@master
+
+Configuration
+-------------
+Some environment variables can be set to configure behaviour:
+::
+
+``TMUX_MPI_MPIRUN``
+  Configure how ``mpiexec`` is called, e.g. ``TMUX_MPI_MPIRUN=mpiexec -s all`` such as for Intel MPI.
+``TMUX_MPI_POST_LAUNCH``
+  Configure a command to launch after the processes have started, e.g. ``TMUX_MPI_POST_LAUNCH="xterm -e 'tmux attach -t tmux-mpi'"`` would launch a new ``xterm`` and connect to the created server.
+
 
 Known Issues and Workarounds
 ----------------------------

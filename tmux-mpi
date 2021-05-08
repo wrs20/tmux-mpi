@@ -19,6 +19,7 @@ import psutil
 import shlex
 
 PROGRAM_PATH = os.path.abspath(__file__)
+MPI_EXEC = shlex.split(os.environ.get("TMUX_MPI_MPIRUN", "mpiexec"))
 
 
 def check_dtach():
@@ -54,13 +55,8 @@ def main():
     # directory for dtach sockets
     temp_dir = tempfile.TemporaryDirectory(prefix="tmux-mpi")
 
-    if "TMUX_MPI_MPIRUN" in os.environ.keys():
-        mpi_exec = shlex.split(os.environ["TMUX_MPI_MPIRUN"])
-    else:
-        mpi_exec = ["mpiexec"]
-
     # do the mpi launch
-    launch_cmd = mpi_exec + ["-n", str(nproc), sys.executable, PROGRAM_PATH, "DTACH_CHILD", temp_dir.name] + cmd
+    launch_cmd = MPI_EXEC + ["-n", str(nproc), sys.executable, PROGRAM_PATH, "DTACH_CHILD", temp_dir.name] + cmd
     mpiproc = subprocess.Popen(launch_cmd)
 
     # Wait for all the dtach processes to create sockets before trying to connect to them

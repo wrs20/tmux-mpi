@@ -25,7 +25,7 @@ POST_LAUNCH = shlex.split(os.environ.get("TMUX_MPI_POST_LAUNCH", ""))
 def check_dtach():
     dtach = shutil.which("dtach")
     if dtach == None:
-        raise RuntimeWarning("This tool requires dtach. We could not find dtach using which.")
+        raise RuntimeError("This tool requires dtach. We could not find dtach using which.")
 
 
 def print_help():
@@ -46,6 +46,41 @@ def check_args():
     if len(sys.argv) < 3:
         print_help()
 
+
+class TMUXSession:
+    def __init__(self, mode):
+        if not mode in ("window", "pane"):
+            raise RuntimeError('TMUX_MPI_MODE should be either "window" or "pane".')
+        self.mode = mode
+        # start a tmux session with name "tmux-mpi"
+        self.tmux_server = libtmux.Server()
+        if self.tmux_server.has_session("tmux-mpi"):
+            self.tmux_session = self.tmux_server.find_where({"session_name": "tmux-mpi"})
+            self.tmux_session.kill_session()
+        self.tmux_session = self.tmux_server.new_session("tmux-mpi")
+        self.tmux_session.set_option("remain-on-exit", "on")
+
+    def add(self, n):
+        if self.mode == "window":
+            for px in range(n):
+                if px == 0:
+                    # get first window
+                    w = self.tmux_session.windows[0]
+                    w.rename_window(str(px))
+                else:
+                    self.tmux_session.new_window(attach=False, window_name=str(px))
+
+    def send_keys(self, ix, keys):
+        if self.mode == "window":
+            self.tmux_session.list_windows()[ix].list_panes()[0].send_keys(keys)
+
+    def send_enter(self):
+        if self.mode == "window":
+            for wx in self.tmux_session.list_windows():
+                wx.list_panes()[0].enter()
+
+    def kill_session(self):
+        self.tmux_session.kill_session()
 
 def main():
 
@@ -72,26 +107,13 @@ def main():
     print("Waiting for dtach sockets to appear. Found {} out of {}.".format(len(socket_files), nproc))
 
     # start a tmux session with name "tmux-mpi"
-    tmux_server = libtmux.Server()
-    if tmux_server.has_session("tmux-mpi"):
-        tmux_session = tmux_server.find_where({"session_name": "tmux-mpi"})
-        tmux_session.kill_session()
-    tmux_session = tmux_server.new_session("tmux-mpi")
-    tmux_session.set_option("remain-on-exit", "on")
-    time.sleep(0.5)
-
-    # create a new window in the tmux session for each dtach instance
+    tmux_session = TMUXSession(os.environ.get("TMUX_MPI_MODE", "window"))
+    # create n windows or panes
+    tmux_session.add(nproc)
+    # run the launch command in each window or pane
     for px in range(nproc):
-        if px == 0:
-            # get first window
-            w = tmux_session.windows[0]
-            w.rename_window(str(px))
-        else:
-            w = tmux_session.new_window(attach=False, window_name=str(px))
-
-        pane = w.list_panes()[0]
         win_cmd = "dtach -a " + socket_files[px]
-        pane.send_keys(win_cmd)
+        tmux_session.send_keys(px, win_cmd)
 
     mpiproc_children = psutil.Process(mpiproc.pid).children(recursive=True)
 
@@ -122,8 +144,7 @@ def main():
 
     # loop over the tmux windows and send a newline to allow the execution to continue
     # exists to prevent the program execution completing before the tmux pane is attached
-    for wx in tmux_session.list_windows():
-        wx.list_panes()[0].enter()
+    tmux_session.send_enter()
 
     print(
         """

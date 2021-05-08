@@ -45,7 +45,7 @@ Configuration
 Some environment variables can be set to configure behaviour:
 
 ``TMUX_MPI_MPIRUN``
-  Configure how ``mpiexec`` is called, e.g. ``TMUX_MPI_MPIRUN=mpiexec -s all`` such as for Intel MPI.
+  Configure how ``mpiexec`` is called, e.g. ``TMUX_MPI_MPIRUN=mpiexec -s all`` for recent Intel MPI.
 ``TMUX_MPI_POST_LAUNCH``
   Configure a command to launch after the processes have started, e.g. ``TMUX_MPI_POST_LAUNCH="xterm -e 'tmux attach -t tmux-mpi'"`` would launch a new ``xterm`` and connect to the created server.
 

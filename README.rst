@@ -50,6 +50,17 @@ Some environment variables can be set to configure behaviour:
   Configure a command to launch after the processes have started, e.g. ``TMUX_MPI_POST_LAUNCH="xterm -e 'tmux attach -t tmux-mpi'"`` would launch a new ``xterm`` and connect to the created server.
 
 
+Examples
+--------
+
+Try the following to start debugging a Python program using a C extension in GDB and 2 MPI ranks. The environment variable will automatically launch a xterm window to connect to the session.
+Note that tmux window numbers are not MPI ranks (this fucntionality would require this tool to access the MPI implementation somehow).
+::
+
+    export TMUX_MPI_POST_LAUNCH="xterm -e 'tmux attach -t tmux-mpi'"
+    tmux-mpi 2 gdb --ex run --args python <script-name>
+
+
 Known Issues and Workarounds
 ----------------------------
 

@@ -1,6 +1,9 @@
 TMUX-MPI
 ========
 
+.. image:: example.png
+  :alt: Example usage with Python script.
+
 Introduction
 ------------
 

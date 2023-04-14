@@ -169,7 +169,7 @@ def main():
     tmux_session.add(nproc)
     # run the launch command in each window or pane
     for px in range(nproc):
-        win_cmd = "dtach -a " + socket_files[px]
+        win_cmd = " dtach -a " + socket_files[px]
         tmux_session.send_keys(px, win_cmd)
 
     # loop over the tmux windows and send a newline to allow the execution to continue

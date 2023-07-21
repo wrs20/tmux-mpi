@@ -43,6 +43,8 @@ Requires dtach and tmux to be installed. Pip installable with:
     
     pip install --upgrade --no-cache-dir git+https://github.com/wrs20/tmux-mpi@master
 
+If you are using an Arch-based Linux distribution, you can find a PKGBUILD for it in the `AUR <https://aur.archlinux.org/packages/tmux-mpi-git>`_.
+
 Configuration
 -------------
 Some environment variables can be set to configure behaviour. These are environment variables such that they can be set once somewhere in an environment.

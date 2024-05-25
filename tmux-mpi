@@ -94,7 +94,7 @@ class TMUXSession:
             wx.enter()
 
     def kill_session(self):
-        self.tmux_session.kill_session()
+        self.tmux_session.kill()
 
     def set_sync_panes(self):
         self.tmux_session.set_option("synchronize-panes", "on")

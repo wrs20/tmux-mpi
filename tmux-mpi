@@ -73,7 +73,7 @@ class TMUXSession:
             w = self.tmux_session.windows[0]
             w.select_layout("tiled")
             for px in range(n - 1):
-                w.split_window()
+                w.split()
                 w.select_layout("tiled")
         self.screens = list(itertools.chain(*[wx.panes for wx in self.tmux_session.windows]))
 

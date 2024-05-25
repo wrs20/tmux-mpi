@@ -75,6 +75,7 @@ class TMUXSession:
             for px in range(n - 1):
                 w.split()
                 w.select_layout("tiled")
+            w.select_pane("0")
         self.screens = list(itertools.chain(*[wx.panes for wx in self.tmux_session.windows]))
 
     def _get_name(self):
@@ -135,7 +136,7 @@ def main():
 
     # Wait for all the dtach processes to create sockets before trying to connect to them
     def get_socket_files():
-        return glob.glob(os.path.join(temp_dir.name, "*", "dtach.socket"))
+        return sorted(glob.glob(os.path.join(temp_dir.name, "*", "dtach.socket")))
 
     time.sleep(0.2)
     socket_files = get_socket_files()
@@ -205,7 +206,7 @@ def dtach_child():
     """
     Creates a new dtach instance with a socket in the temp dir that runs this script again to invoke exec_child.
     """
-    dtach_socket = os.path.join(tempfile.mkdtemp(dir=sys.argv[2]), "dtach.socket")
+    dtach_socket = os.path.join(tempfile.mkdtemp(prefix=str(os.getpid()) + "_", dir=sys.argv[2]), "dtach.socket")
     cmd = sys.argv[3:]
     dtach_cmd = ["dtach", "-N", dtach_socket, sys.executable, PROGRAM_PATH, "EXEC_CHILD", sys.argv[2]] + cmd
 

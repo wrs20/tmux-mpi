@@ -108,3 +108,16 @@ Some (recent?) versions of Intel MPI try to do stdin redirection by default. If 
     
     TMUX_MPI_MPIRUN="mpiexec -s all" tmux-mpi 2 python
 
+macOS Crash Reporter
+~~~~~~~~~~~~~~~~~~~~
+
+I have managed to disable the macOS crash reporter that presents the "Application quit unexpectedly" pop-up with the following command in a terminal. 
+Your mileage may vary for this fix.
+::
+
+    defaults write com.apple.CrashReporter DialogType none
+
+
+
+
+

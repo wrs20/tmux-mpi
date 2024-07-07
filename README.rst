@@ -89,6 +89,18 @@ Same as above but using tmux panes instead of windows and synchronised input:
 Known Issues and Workarounds
 ----------------------------
 
+GDB Pagination
+~~~~~~~~~~~~~~
+By default GDB displays some text on launch.
+If this text exceeds the available space then GDB enters pagination mode which pauses the execution until enter is sent in the paused windows. 
+The normal GDB config file (``~/.gdbinit``) is applied after the this startup text is presented, hence disabling pagination in that config file does not solve the problem.
+Instead disable pagination, and optionally the startup text altogether, in the ``~/.gdbearlyinit`` file with the following options.
+::
+
+    set pagination off
+    set startup-quietly
+    
+
 Intel MPI
 ~~~~~~~~~
 Some (recent?) versions of Intel MPI try to do stdin redirection by default. If you have issues with ranks not starting try the following (as demonstrated using python):

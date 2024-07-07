@@ -38,7 +38,13 @@ Copyright 2020, WR Saunders
 
 Installation
 ------------
-Requires dtach and tmux to be installed. Pip installable with:
+Requires dtach and tmux to be installed. 
+This tool can be installed at a user account level with `pipx <https://github.com/pypa/pipx>`_ and the command:
+::
+
+    pipx install git+https://github.com/wrs20/tmux-mpi@master
+
+Pip installable into to a virtual environment with:
 ::
     
     pip install --upgrade --no-cache-dir git+https://github.com/wrs20/tmux-mpi@master

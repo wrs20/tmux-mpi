@@ -93,7 +93,7 @@ GDB Pagination
 ~~~~~~~~~~~~~~
 By default GDB displays some text on launch.
 If this text exceeds the available space then GDB enters pagination mode which pauses the execution until enter is sent in the paused windows. 
-The normal GDB config file (``~/.gdbinit``) is applied after the this startup text is presented, hence disabling pagination in that config file does not solve the problem.
+The normal GDB config file (``~/.gdbinit``) is applied after this startup text is presented, hence disabling pagination in that config file does not solve the problem.
 Instead disable pagination, and optionally the startup text altogether, in the ``~/.gdbearlyinit`` file with the following options.
 ::
 

@@ -75,7 +75,8 @@ class TMUXSession:
             for px in range(n - 1):
                 w.split()
                 w.select_layout("tiled")
-            w.select_pane("0")
+            first_pane = min(w.panes, key=lambda px: px.pane_index)
+            first_pane.select()
         self.screens = list(itertools.chain(*[wx.panes for wx in self.tmux_session.windows]))
 
     def _get_name(self):
